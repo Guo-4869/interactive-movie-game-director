@@ -1,0 +1,33 @@
+{
+  "name": "interactive-movie-game-director",
+  "version": "1.0.0",
+  "description": "AI-powered interactive movie game engine",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "jest"
+  },
+  "keywords": [
+    "AI",
+    "interactive",
+    "movie",
+    "game",
+    "script",
+    "writing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "openai": "^4.0.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  }
+}
