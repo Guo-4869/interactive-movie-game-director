@@ -146,10 +146,191 @@ function generateVideoPrompt(scene: ScriptScene): string {
 
 ## 技术栈
 
-- **前端**：React/Vue + TypeScript
-- **后端**：Node.js/Python + 机器学习框架
-- **AI服务**：OpenAI/Claude (剧本续写) + Sora/Runway (视频生成)
+- **语言**：TypeScript
+- **框架**：Node.js
+- **AI服务**：OpenAI API (GPT-4)
 - **数据库**：MongoDB/PostgreSQL (存储剧情状态)
+
+## 快速开始
+
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 配置环境
+
+1. 创建环境变量文件：
+
+```bash
+cp .env.example .env
+```
+
+2. 编辑 `.env` 文件，填入你的 OpenAI API Key：
+
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4
+```
+
+### 运行演示
+
+```bash
+npm run dev
+```
+
+## 使用指南
+
+### 核心API
+
+#### 1. 创建剧本续写器
+
+```typescript
+import { createScriptWriter } from './src/services/scriptWriter';
+
+const scriptWriter = createScriptWriter({
+  model: 'gpt-4',
+  temperature: 0.7,
+  maxTokens: 2000,
+});
+```
+
+#### 2. 定义故事状态
+
+```typescript
+import { StoryState, Character } from './src/types';
+
+const characters: Character[] = [
+  {
+    id: '1',
+    name: '林晓',
+    description: '28岁的年轻侦探，眼神锐利，思维敏捷',
+    personality: '冷静理智，善于观察，有时过于执着',
+    background: '曾是警校高材生，因一次失误离开警队，现为私家侦探',
+  },
+];
+
+const storyState: StoryState = {
+  id: 'story-1',
+  title: '雨夜谜案',
+  premise: '在一个暴雨之夜，侦探林晓接到一个神秘电话，前往一栋废弃的旧宅调查一起失踪案。',
+  characters,
+  currentSceneId: '',
+  scenes: [],
+  choicesHistory: [],
+  createdAt: new Date(),
+  lastUpdated: new Date(),
+};
+```
+
+#### 3. 生成初始场景
+
+```typescript
+const firstScene = await scriptWriter.writeInitialScene(storyState);
+console.log('场景标题:', firstScene.title);
+console.log('地点:', firstScene.setting);
+console.log('选择:', firstScene.nextChoices);
+```
+
+#### 4. 续写故事
+
+```typescript
+// 根据玩家选择续写
+const playerChoice = firstScene.nextChoices[0];
+const nextScene = await scriptWriter.continueStory(
+  storyState,
+  [firstScene],
+  playerChoice
+);
+```
+
+#### 5. 批量生成场景
+
+```typescript
+const scenes = await scriptWriter.writeMultipleScenes(storyState, 5);
+```
+
+### 输出格式
+
+每个场景返回以下结构：
+
+```typescript
+interface ScriptScene {
+  id: string;                    // 场景唯一标识
+  sceneNumber: number;           // 场景编号
+  title: string;                 // 场景标题
+  setting: string;               // 地点描述
+  timeOfDay: string;             // 时间描述（如：深夜、黄昏）
+  atmosphere: string;            // 氛围描述（如：紧张、神秘）
+  characters: Character[];       // 出场角色
+  dialogue: Dialogue[];          // 对话列表
+  action: string;                // 动作描述
+  nextChoices: Choice[];         // 玩家选择选项
+  isEnding?: boolean;            // 是否为结局
+}
+```
+
+### 决策循环示例
+
+```typescript
+async function runStoryLoop(storyState: StoryState) {
+  const scriptWriter = createScriptWriter();
+  let currentScene = await scriptWriter.writeInitialScene(storyState);
+  let previousScenes = [currentScene];
+
+  while (!currentScene.isEnding) {
+    displayScene(currentScene);
+    
+    const playerChoice = await getPlayerChoice(currentScene.nextChoices);
+    
+    currentScene = await scriptWriter.continueStory(
+      storyState,
+      previousScenes,
+      playerChoice
+    );
+    previousScenes.push(currentScene);
+  }
+  
+  displayEnding(currentScene);
+}
+```
+
+## 项目结构
+
+```
+.
+├── README.md              # 项目说明文档
+├── package.json           # 依赖配置
+├── tsconfig.json          # TypeScript配置
+├── .env.example           # 环境变量模板
+└── src/
+    ├── index.ts           # 入口文件（含演示）
+    ├── types/
+    │   └── index.ts       # 类型定义
+    ├── services/
+    │   └── scriptWriter.ts # 剧本续写服务
+    └── utils/
+        └── promptBuilder.ts # AI提示词构建器
+```
+
+## API参考
+
+### ScriptWriterService
+
+| 方法 | 功能 | 参数 | 返回值 |
+|------|------|------|--------|
+| `writeInitialScene` | 生成初始场景 | `storyState: StoryState` | `Promise<ScriptScene>` |
+| `continueStory` | 续写剧情 | `storyState, previousScenes, lastChoice?` | `Promise<ScriptScene>` |
+| `writeMultipleScenes` | 批量生成场景 | `storyState, count` | `Promise<ScriptScene[]>` |
+
+### 配置选项
+
+| 选项 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `model` | string | `gpt-4` | AI模型名称 |
+| `temperature` | number | `0.7` | 创意程度（0-1） |
+| `maxTokens` | number | `2000` | 最大token数 |
 
 ## 贡献
 
